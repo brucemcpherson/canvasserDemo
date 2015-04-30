@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<!-- This CSS package applies Google styling; it should always be included. -->
+<html>
+<head>
+  <title>canvas dragger</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+
+</head>
+
+<body>
+  <h2>demo of canvasser function</h2>
+  <div>drag the shapes in the red canvas around</div>
+  <table>
+    <tr>
+      <td>
+      <canvas id="canvas" height="230" width="300">
+        Your browser doesnt support canvas
+      </canvas> 
+      </td>
+       <td>
+        <div id="block" class="block" style="border:2px solid gray;"></div>
+        <div id="blueblock" class="block" style="border:2px solid blue;"></div>
+        <div id="pinkblock" class="block" style="border:2px solid pink;"></div> 
+      </td>
+    </tr>
+  </table>
+  
+  <button id="reset" class="red" onclick="canvasserDemo()">Reset</button>
+
+<script>
+
+// and run it
+    window.onload = function () {
+        canvasserDemo();
+    };
+
+</script>    
+<script src="CanvasserShape.js"></script>
+<script src="CanvasserMouse.js"></script>
+<script src="Canvasser.js"></script>
+<script src="share.js"></script>
+<script src="main.js"></script>
+
