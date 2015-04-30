@@ -1,0 +1,989 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Module>
+	<ModulePrefs title="canvasserdemo">
+  		<Require feature="dynamic-height"/>
+
+	</ModulePrefs>
+  <Content type="html"><![CDATA[
+
+  <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons.css">
+
+
+    <style>
+    
+    canvas { 
+      border: 2px solid #eee; 
+      background: red;
+    }
+    
+    .block {
+      font-size:.8em;
+      display:block;
+      width:60px;
+      height:60px;
+      margin:6px;
+      
+    }
+      
+    </style>
+  
+    <div id="content">
+      <h2>demo of canvasser function</h2>
+      <div>drag the shapes in the red canvas around</div>
+      <table>
+        <tr>
+          <td>
+          <canvas id="canvas" height="230" width="300">
+            Your browser doesnt support canvas
+          </canvas> 
+          </td>
+           <td>
+            <div id="block" class="block" style="border:2px solid gray;"></div>
+            <div id="blueblock" class="block" style="border:2px solid blue;"></div>
+            <div id="pinkblock" class="block" style="border:2px solid pink;"></div> 
+          </td>
+        </tr>
+      </table>
+      <button id="reset" class="red" onclick="canvasserDemo()">Reset</button>
+    </div>
+
+    <script>
+    
+      // register the entry point
+      gadgets.util.registerOnLoadHandler(canvasserDemo);
+      
+      
+      function getHeight (e) {
+       		return e.offsetHeight;
+      }
+      
+      function canvasserDemo () {
+      
+            
+        // get the pref parameters
+        var prefs = new gadgets.Prefs();
+        gadgets.window.adjustHeight(getHeight(document.getElementById("content")));
+        
+        var cv = new Canvasser (document.getElementById("canvas"));
+        var block = document.getElementById("block");
+        
+        // a completely default shape
+        cv.addShape({});
+        
+        // some modifications
+        cv.addShape({shape:{ x:20, y:10 , width:20, color:'green', z:150 }});
+        cv.addShape({shape:{ x:40, y:60 , width:30, color:'yellow', z:50  }});
+        
+        // when we are not over any shape, turn them all gray
+        cv.onShapeExit = function(cs) { 
+          block.style.background = 'gray' ;
+        };
+        
+        // when we enter a shape, turn box the same color as the shape
+        cv.onShapeEnter = function(cs) { 
+            block.style.background = cs.item.shape.color ;
+        };
+        
+        // some data in here
+        var blue = cv.addShape({ 
+            shape:{x:90, y:30,width:60,height:60,color:'blue',z:50},
+            data: {block:'blueblock',something:'blue data'}
+        });
+      
+        // can copy another
+        var pink = cv.addShape(blue.item.shape);
+        
+        // can tweak it directly
+        pink.item.shape.x += pink.item.shape.width;
+        pink.item.shape.color = "pink";
+        
+        // can assign the data directly
+        pink.item.data.block = 'pinkblock';
+        pink.item.data.something = 'pink data';
+      
+        // exchange data when drag ends
+        blue.onDragEnd = function (shape, isOver) {
+          
+          // the element for the dragged item
+          var block = document.getElementById(shape.item.data.block);
+          block.innerHTML = shape.item.data.something;
+          
+          if (isOver && isOver.item.data) {
+            //then we are positioned over another shape
+            var blockOver = document.getElementById(isOver.item.data.block);
+            if(blockOver) {
+              blockOver.innerHTML = isOver.item.data.something;
+              block.innerHTML += "/" + isOver.item.data.something;
+            }
+          }
+      
+        };
+        
+        // pink will use the same
+        pink.onDragEnd = blue.onDragEnd;
+        
+        // how to do text, and to use the swap position rather than place
+        cv.addShape({shape:{x:100,y:100,color:"indigo",width:60,height:40,mode:cv.ENUMS.MODES.SWAP,text:{content:'i will swap'}}});
+      
+        // how to do text, and to use the swap position rather than place
+        cv.addShape({shape:{x:150,y:110,z:10,color:"lemonchiffon",width:60,height:40,dragz:cv.ENUMS.LAYERS.UNCHANGED,
+           text:{fillStyle:'black',content:'i keep z pos'}}});
+        
+        cv.paintAll();
+      }
+
+      
+
+      function extend () {
+        // we have a variable number of arguments
+        if (!arguments.length) {
+          // default with no arguments is to return undefined 
+          return undefined;
+        }
+        
+        // validate we have all objects
+        var extenders = [],targetOb;
+        for (var i = 0; i < arguments.length; i++) {
+          if(arguments[i]) {
+            if (!isObject(arguments[i])) {
+              throw 'extend arguments must be objects not ' + arguments[i];
+            }
+            if (i ===0 ) {
+              targetOb = arguments[i];
+            } 
+            else {
+              extenders.push (arguments[i]);
+            }
+          }
+        }
+        
+        // set defaults from extender objects
+        extenders.forEach(function(d) {
+            recurse(targetOb, d);
+        });
+        
+        return targetOb;
+       
+        // run do a deep check
+        function recurse(tob,sob) {
+          Object.keys(sob).forEach(function (k) {
+          
+            // if target ob is completely undefined, then copy the whole thing
+            if (isUndefined(tob[k])) {
+              tob[k] = sob[k];
+            }
+            
+            // if source ob is an object then we need to recurse to find any missing items in the target ob
+            else if (isObject(sob[k])) {
+              recurse (tob[k] , sob[k]);
+            }
+            
+          });
+        }
+      }
+      function clone(obj) {
+        return obj ? JSON.parse(JSON.stringify(obj)) : obj;
+      }
+      /** 
+      * isObject
+      * check if an item is an object
+      * @memberof DbAbstraction
+      * @param {object} obj an item to be tested
+      * @return {boolean} whether its an object
+      */
+      function isObject (obj) {
+        return obj === Object(obj);
+      }
+      
+      /** 
+       * check if item is undefined
+       * @param {*} item the item to check
+       * @return {boolean} whether it is undefined
+       **/
+      function isUndefined (item) {
+        return typeof item === 'undefined';
+      }
+
+      /**
+       * this is a shape wrapper object - one of these is needed for each shape on the canvas
+       * they are addede via Canvasser so unlikly to be created directly
+       * @param {object} shape the shape object .. should be {shape:..., data:... anything else.. not used by canvasser}, will be added to the defaultShape
+       * @param {Canasser} canvasser the Canvasser parent object
+       * @param {number} index - the index number to resolve plot order when z-index matches
+       * @return {CanvasserShape} the completed shape
+       */
+      var CanvasserShape = function (shape, canvasser,index) {
+        
+        'use strict';
+        var self = this;
+        
+       /**
+        * backlink to parent canvasser
+        * @type {Canvasser}
+        */
+        Object.defineProperty (self , "canvasser", { 
+          value:canvasser
+        }); 
+        
+       /**
+        * shape index - resolves sorting if z-values are equal
+        * @type {number}
+        */
+        Object.defineProperty (self , "index", { 
+          value:index
+        }); 
+        
+       /**
+        * shape name - can be useful for debugging
+        * @type {number}
+        */
+        Object.defineProperty (self , "name", { 
+          value:'shape-'+index.toString(),
+          writable:true
+        }); 
+        
+       /**
+        * the shape property is merged with the default item
+        * @type {object}
+        */
+        Object.defineProperty (self , "item", { 
+          value:extend( clone(shape) || {} , clone(self.canvasser.defaultItem)),
+          writable:true
+        }); 
+        
+        
+        /**
+        * can make a save of origina.current values
+        * @type {object}
+        */
+        Object.defineProperty (self , "save", { 
+          value:function () {
+            self.item.original = clone(self.item.shape);
+          },
+          writable:true
+        });
+        // handy for a reset
+        self.save();
+        
+       /**
+        * reset back to orogina;/saved values
+        * @type {object}
+        */
+        Object.defineProperty (self , "restore", { 
+          value:function () {
+            self.item.shape = clone(self.item.original);
+          },
+          writable:true
+        });
+        
+        /**
+        * paint a shape - takes care of translations, then calls user definabel onPaint
+        */
+        
+        self.paint = function() {
+         
+          var canvasser = self.canvasser;
+          var ctx = canvasser.context;
+          var shape = self.item.shape;
+        
+          // save context
+          ctx.save();
+          
+          // do any translating for dragee
+          if (self.canvasser.dragging && canvasser.dragging.index === self.index) {
+      
+              // always show dragee on top
+              ctx.globalCompositeOperation = "source-over";
+              var props = canvasser.mouse.getProperties();
+              
+              // the shape being dragged recorded the initial mouse position when it was selected.
+              // we just need to draw it again in the new spot, translated by the difference between here and there
+             ctx.translate( 
+               props.window.x - canvasser.dragging.dragee.start.x,
+               props.window.y - canvasser.dragging.dragee.start.y
+             );
+          
+          }
+          // paint the object
+          self.onPaint(self);
+          
+          // get context back
+          ctx.restore();
+        };
+       /**
+        * the shape property is merged with the default item
+        * @type {function}
+        */
+        Object.defineProperty (self , "onPaint", { 
+          value:function (canvasserShape) { 
+            self.canvasser.onPaint (canvasserShape);
+          },
+          writable:true
+        });  
+        
+        /**
+        * user configurable drag end
+        * @type {function}
+        */
+        Object.defineProperty (self , "onDragEnd", { 
+          value:function (dragee , focus) { 
+            self.canvasser.onDragEnd(dragee, focus);
+          },
+          writable:true
+        }); 
+         /**
+        * user configurable drag start
+        * @type {function}
+        */
+        Object.defineProperty (self , "onDragStart", { 
+          value:function (focus) { 
+            self.canvasser.onDragEnd(focus);
+          },
+          writable:true
+        }); 
+       /**
+        * called when a shape enter event is detected
+        * @type {function}
+        */
+        Object.defineProperty (self , "onShapeEnter", { 
+          value:function (canvasserShape) { 
+            self.canvasser.onShapeEnter(canvasserShape);
+          },
+          writable:true
+        }); 
+        
+         /**
+        * called when a shape exit event is detected
+        * @type {function}
+        */
+        Object.defineProperty (self , "onShapeExit", { 
+          value:function (canvasserShape) { 
+            self.canvasser.onShapeExit(canvasserShape);
+          },
+          writable:true
+        }); 
+        
+       
+        
+      };
+      /**
+       * manage the mouse position
+       * @param {Canasser} canvasser the conttrolling object
+       * @return {CanvasserMouse}
+       */
+      function CanvasserMouse(canvasser) {
+         
+          'use strict';
+          
+          var self = this;
+          var mouse_ = {window:{x:undefined,y:undefined}};
+          
+           /**
+        * backlink to parent canvasser
+        * @type {Canvasser}
+        */
+        Object.defineProperty (self , "canvasser", { 
+          value:canvasser
+        }); 
+        
+          
+        self.getProperties = function() {
+           
+         // use current current mouse position to calculate this stuff
+         var pos = {
+            window:mouse_.window,
+            canvas:{ 
+              x:mouse_.window.x - self.canvasser.bounds.left,
+              y:mouse_.window.y - self.canvasser.bounds.top
+            },
+            focus: null
+          };
+          
+          // get the current shape focus. which will be sorted in painted order
+          if (!isUndefined(pos.window.x)) {
+            pos.focus = self.canvasser.shapes.reduce (function (p,c) {
+              var shape = c.item.shape;
+              
+              // only worls for rectangles for now
+              return (pos.canvas.x >= shape.x && pos.canvas.x < shape.x + shape.width && 
+                  pos.canvas.y >= shape.y && pos.canvas.y < shape.y + shape.height) ? c : p;
+      
+            },undefined);
+           
+          }
+          
+          return pos;
+        };
+         
+         self.setProperties = function(e) {
+          mouse_ = {
+            window: {
+              x:e.clientX,
+              y:e.clientY
+            }
+          };
+          return self;
+         };
+      
+        /**
+         * whether the mouse is currently positioned over the canvas
+         * @type {boolean}
+         */ 
+        Object.defineProperty (self , "isOutsideCanvas", { 
+          get: function () { 
+            var bounds = self.canvasser.bounds;
+            var properties = self.getProperties();
+            return (
+              typeof properties.window.x === typeof undefined ||
+              properties.window.x < bounds.left || 
+              properties.window.y < bounds.top ||
+              properties.window.x > bounds.right ||
+              properties.window.y > bounds.bottom 
+              
+            );
+          }
+        });
+        
+      };
+ 
+
+
+      var Canvasser = function (canvas) {
+        'use strict';
+        
+        var self = this;
+      
+         Object.defineProperty (self , "ENUMS", { 
+            value : {  
+              // types of shapes supported         
+              TYPES: {
+                RECTANGLE:1
+              },
+              
+              // default layer parameters 
+              LAYERS: {
+                ZINDEX:100,
+                ONTOP:-2,
+                UNCHANGED:-1
+              },
+              
+              // dragging inserting modes
+              MODES: {
+                SHUFFLE:1,     // everything on the same layer budges down to make room for dragged shape
+                SWAP:2,        // items swap positions
+                PLACE:3        // dragged item just sits where it landed
+              },
+              
+              FILLS: {
+                requestAnimationFrame: window.requestAnimationFrame || 
+                  window.mozRequestAnimationFrame || 
+                  window.webkitRequestAnimationFrame ||
+                  window.msRequestAnimationFrame,     // http://www.paulirish.com/2011/requestanimationframe-for-smart-animating/
+              }
+            }  
+         });
+         
+        // SETTINGS for this object
+        Object.defineProperty (self , "SETTINGS", { 
+          writeable:true,
+          value:{
+      
+            CURSORS: {
+              normal:'default',
+              drag:'move',
+              eyeDropGrab:'-webkit-grab',
+              eyeDrop:'cell',
+              out:'not-allowed',
+              active:'pointer'
+            },
+      
+            DEFAULTS: {
+              ZINDEX:self.ENUMS.LAYERS.ZINDEX,
+              
+              ITEM: {
+                shape: {
+                  x:0,
+                  y:0,
+                  z:self.ENUMS.LAYERS.ZINDEX,
+                  height: 50,
+                  width: 50,
+                  color: 'black',
+                  border: {
+                    width: 2,
+                    color: 'gray'
+                  },
+                  text: {
+                    content:'',
+                    font: '10px sans-serif',
+                    textAlign:'center',
+                    textBaseline:'alphabetic',
+                    direction:'inherit',
+                    fillStyle:'white'
+                  },
+                  type:self.ENUMS.TYPES.RECTANGLE,        // for now only do rectangles .. will add an enum for later
+                  center:false,  // whether the co-ords apply to the center (normally top left) TODO
+                  visible:true,  // whether to display TODO
+                  draggable:true,// whether item should be considered for dragging TODO
+                  mode:self.ENUMS.MODES.PLACE, // how to handle a dragged item
+                  dragz:self.ENUMS.LAYERS.ONTOP
+                },
+                data:{        // this can be used to carry around any user required properties
+                }
+              }
+            }
+          }
+        }); 
+      
+        /**
+         * the default template for shapes will be added to the shape passed.
+         * @type {object}
+         */
+        Object.defineProperty (self , "defaultItem", { 
+          value:self.SETTINGS.DEFAULTS.ITEM,
+          writable:true
+        });
+        
+        /**
+         * the default template for shapes will be added to the shape passed.
+         * @type {object}
+         */
+        Object.defineProperty (self , "onPaint", { 
+          value:function (canvasserShape) {
+                
+            // these are the things likley to be needed for plotting/ delaing wiht the shape
+            var ctx = canvasserShape.canvasser.context;
+            var shape = canvasserShape.item.shape;
+            var data = canvasserShape.item.data;
+            
+            if (shape.type === self.ENUMS.TYPES.RECTANGLE) {
+              ctx.fillStyle = shape.color;
+              ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
+              // draw a border if needed
+              if (shape.border) {
+                ctx.beginPath();
+                ctx.lineWidth = shape.border.width;
+                ctx.strokeStyle = shape.border.color;
+                ctx.rect(shape.x, shape.y, shape.width, shape.height);
+                ctx.stroke();
+              }
+              // add some text if needed
+              if (shape.text && shape.text.content) {
+                ['font', 'textAlign', 'textBaseline' , 'direction' , 'fillStyle'].forEach (function(d) {
+                  if (shape.text[d]) ctx[d] = shape.text[d];
+                });
+                ctx.fillText (shape.text.content,shape.x + shape.width/2 , shape.y + shape.height/2, shape.width);
+              }
+      
+            }
+            else {
+              throw 'unknown shape type ' + JSON.stringify(canvasserShape.item);
+            }
+          },
+          writable:true
+        });
+        
+        //----- properties -----------
+        /**
+         * the canvas element to operate on
+         * @type {HTMLCanvasElement}
+         */
+        Object.defineProperty (self , "canvas", { 
+          value:canvas
+        });
+        
+        /**
+        * the context object
+        * @type {CanvasRenderingContext2D}
+        */
+        Object.defineProperty (self , "context", { 
+          value: self.canvas.getContext("2d")
+        });
+        
+        /**
+        * whether dragging is in progress 
+        * @type {object}
+        */
+        Object.defineProperty (self , "dragging", { 
+          value: null,
+          writable:true
+        });
+        
+        /**
+        * add a shape to the shapes known on this canvas
+        * @type {object}
+        */
+        self.addShape = function (shape) {
+          
+          var cs = new CanvasserShape (shape , self , 1 + self.shapes.reduce(function(p,c) {
+            return Math.max (p,c.index);  
+          },-1));
+          
+          self.shapes.push(cs);
+          return cs;
+        };
+        
+        /**
+        * paint all the shapes associated with this canvas
+        * @return  {undefined | CanvasserShape } shape the the point is over
+        */
+        self.paintAll = function () {
+          
+          // clear existing canvas content
+          self.context.clearRect(0, 0, self.canvas.width, self.canvas.height);
+          
+          // need to sort in Z order
+          self.shapes.sort (function(a,b) {
+            
+            // if its being dragged then always on top
+            if (a.dragee) return 1;
+            if (b.dragee) return -1;
+            
+            // now do a regular comparison
+            var d = a.item.shape.z - b.item.shape.z;
+            return d ? d : a.item.index - b.item.index  ; 
+            
+          })
+          .forEach (function (d) {
+            d.paint();
+          });
+          
+          // if this is part of an animation, do it again
+          if (self.animating) { 
+            self.ENUMS.FILLS.requestAnimationFrame.call (window, self.paintAll);
+          }
+          
+          return self;
+        };
+      
+        
+        /**
+        * the current mouse positions relative to the window and to the canvas
+        * @type {object}
+        */ 
+        Object.defineProperty (self , "mouse", { 
+          value: new CanvasserMouse (self),
+          writable:true
+        });
+      
+        /**
+        * the canvas bounds
+        * @type {DOMRect}
+        */ 
+        Object.defineProperty (self , "bounds", { 
+          get: function () { 
+            return self.canvas.getBoundingClientRect();
+          }
+        });
+        
+      
+        /**
+         * the shapes
+         * @type {object[]}
+         */
+        Object.defineProperty (self , "shapes", { 
+          value:[],
+          writable:true
+        });
+      
+        
+      
+        /**
+        * set the canvas cursor style
+        * @param {string} the cursor style to set
+        */
+        self.setCanvasCursor = function (cursor) {
+          self.canvas.style.cursor = cursor;
+        };
+      
+      
+        //---- user callbacks for additional actions - showing skeletons
+      
+          /**
+         * what to do if a mouse down is detected inside canvas
+         * @type {function}
+         */ 
+        Object.defineProperty (self , "defaulPainter", { 
+          value: function (canvasserShape) { 
+            // these are the things you might need access to
+            var shape = canvasserShape.item.shape;
+            var canvas = cannvasserShape.canvas;
+            var ctx = canvas.context;
+            var data = canvasserShape.item.data;
+            
+            // this is the plotting - any saving and restoring and tranlation for dragging are already done
+            ctx.fillStyle = shape.color;
+            ctx.fillRect (shape.x, shape.y, shape.width, shape.height);
+            if (shape.border) {
+              ctx.beginPath();
+              ctx.lineWidth = shape.border.width;
+              ctx.strokeStyle = shape.border.color;
+              ctx.rect(shape.x, shape.y, shape.width, shape.height);
+              ctx.stroke();
+            }
+          },
+          writable: true
+        });
+        /**
+         * what to do if a mouse down is detected inside canvas
+         * @type {function}
+         */ 
+        Object.defineProperty (self , "onMouseDown", { 
+          value: function () { 
+              self.dragStart();
+          },
+          writable: true
+        });
+        
+        /**
+         * default user function
+         * @type {function}
+         */ 
+        Object.defineProperty (self , "onDragStart", { 
+          value: function (canvasserShape) { 
+            // nothing special to do
+          },
+          writable: true
+        });
+        
+        /**
+         * what to do if a mouse up is detected inside canvas
+         * @type {function}
+         */ 
+        Object.defineProperty (self , "onMouseUp", { 
+          value: function () { 
+            if (!self.dragging) {
+              
+            }
+            else {
+              self.dragEnd();
+            }
+          },
+          writable: true
+        });
+        
+          /**
+         * what to do if entering canvas is detected
+         * @type {function}
+         */ 
+        Object.defineProperty (self , "dragStart", { 
+          value: function () { 
+            
+            // find out what shape is to be dragged
+            var props = self.mouse.getProperties();
+            
+            // note where we started dragging it
+            props.focus.dragee = {
+              start:  { 
+                x:props.window.x,
+                y:props.window.y
+              }
+            };
+            
+            // note that we are actually dragging
+            self.dragging = props.focus;
+      
+            // cursor indicates drag is in process
+            self.setCanvasCursor (self.SETTINGS.CURSORS.drag);
+            
+            // kick off animation
+            self.animating = true;
+            self.paintAll();
+            
+            // user function
+            props.focus.onDragStart(props.focus);
+          },
+          writable: true
+        });
+        
+        /**
+         * what to do if entering canvas is detected
+         * @type {function}
+         */ 
+        Object.defineProperty (self , "onDragEnd", { 
+          value: function () {
+            // nothing special to do here
+          }, 
+          writable:true });
+        
+        /**
+         * what to do if entering canvas is detected
+         * @type {function}
+         */ 
+        Object.defineProperty (self , "dragEnd", { 
+          value: function () { 
+            
+            // ending of drag detected
+            self.animating = false;
+            
+            // need to change the active position to where we've dragged it to
+            // but need to snap to grid
+      
+            var props = self.mouse.getProperties();
+            var dragee = self.dragging.dragee;
+            var shape = self.dragging.item.shape;
+            var originalPos = {
+              x : shape.x,
+              y : shape.y,
+              z : shape.z
+            };
+            
+            if (shape.mode === self.ENUMS.MODES.PLACE || shape.mode === self.ENUMS.MODES.SWAP) {
+              
+              // mode is PLACE - just dump it where it lands, and leave  other shapes as they are
+              shape.x += (props.window.x  - dragee.start.x);
+              shape.y += (props.window.y  - dragee.start.y);
+              
+              // make sure it still fits
+              tameShape(shape);
+              
+              // swap them round
+              if(shape.mode === self.ENUMS.MODES.SWAP && props.focus) {
+                ['x','y','z'].forEach (function(d){
+                  props.focus.item.shape[d] = originalPos[d];
+                });
+              }
+            
+            }
+      
+            else if (shape.mode === self.ENUMS.MODES.SHUFFLE) { 
+              throw 'shuffle not yet implemented';
+            }
+      
+            else {
+              throw 'unknown mode ' + JSON.stringify(shape);
+            }
+            
+            // fix up Z layer
+            if (shape.dragz !== self.ENUMS.LAYERS.UNCHANGED) {
+              if (shape.dragz === self.ENUMS.LAYERS.ONTOP) {
+                shape.z = self.shapes.reduce(function(p,c) {
+                  return isUndefined(p) ? c.item.shape.z : Math.max (p,c.item.shape.z);  
+                },undefined) +1 ;  
+              }
+              else {
+                shape.z= shape.dragz;
+              }
+            }
+            // call user function
+            self.dragging.onDragEnd(self.dragging , props.focus);
+            
+            // clear drag as done
+            self.dragging.dragee = null;
+            self.dragging = null;
+      
+            // repaint
+            self.paintAll();
+            
+            // finishing drag - whatever is moving is in its normal position
+            self.setCanvasCursor (self.SETTINGS.CURSORS.normal);
+           
+          },
+          writable: true
+        });
+      
+        // make sure it still fits on canvas and adjust if needed
+        function tameShape (shape) {
+          if (shape.x < 0) shape.x = 0;
+          if (shape.x + shape.width > self.canvas.width) shape.x = canvas.width - shape.x;
+          if (shape.y < 0) shape.y = 0;
+          if (shape.y + shape.height > self.canvas.height) shape.y = canvas.height - shape.y;
+          return shape;
+        }
+        
+        /**
+         * what to do if entering canvas is detected
+         * @type {function}
+         */ 
+        Object.defineProperty (self , "onCanvasEnter", { 
+          value: function (canvasser) { 
+            
+            // curssors shows we can do something
+            if (canvasser.dragging) {
+              
+              // if we're sti;; dragging
+              canvasser.setCanvasCursor (canvasser.SETTINGS.CURSORS.drag);
+            
+            }
+            else {
+              
+              canvasser.setCanvasCursor (canvasser.SETTINGS.CURSORS.active);
+            }
+            
+          },
+          writable: true
+        });
+        
+        /**
+         * what to do if exiting canvas is detected
+         * @type {function}
+         */ 
+        Object.defineProperty (self , "onCanvasExit", { 
+          value: function (canvasser) { 
+      
+           // cursor gets reset
+           canvasser.setCanvasCursor (canvasser.SETTINGS.CURSORS.normal);
+           
+          },
+          writable: true
+        });
+        
+        //----- events ---
+      
+        /**
+         * window events - mouse move
+         * @type {boolean}
+         */ 
+        window.addEventListener ("mousemove", function (e) {
+          
+          // keep the old one save
+          var oldMouse = self.mouse;
+          var wasOutside = !oldMouse || oldMouse.isOutsideCanvas;
+          var oldProps = oldMouse ? oldMouse.getProperties() : null;
+          var oldFocus = (!wasOutside && oldProps) ? oldProps.focus : null;
+          
+          // set the new position
+          self.mouse = new CanvasserMouse(self).setProperties(e);
+          var newProps = self.mouse.getProperties();
+          var isOutside = self.mouse.isOutsideCanvas;
+          var newFocus = !isOutside ? newProps.focus : null;
+          
+          // if we're exiting a shape
+          if (oldFocus  && (!newFocus || newFocus.index !== oldFocus.index)) {
+            oldFocus.onShapeExit (oldFocus);
+          }
+        
+          //maybe we're leaving the canvas
+          if (isOutside && !wasOutside) {
+            self.onCanvasExit (self); 
+          }
+          
+          //maybe we're entering a canvas
+          if (wasOutside && !isOutside) {
+            self.onCanvasEnter (self);   
+          }
+        
+          //maybe we're entering a new shape
+          if (newFocus  && (!oldFocus || oldFocus.index !== newFocus.index)) { 
+            newFocus.onShapeEnter (newFocus);
+          }
+          
+         
+          
+        },false);
+        
+        canvas.addEventListener ("mousedown" , function (e) {
+          self.onMouseDown();
+        }, false);
+        
+        window.addEventListener ("mouseup" , function (e) {
+          self.onMouseUp();  
+        }, false);
+        
+        
+      };
+	  
+
+  	</script>
+  ]]>
+  </Content>
+</Module>
