@@ -1,0 +1,14 @@
+
+canvas { 
+  border: 2px solid #eee; 
+  background: red;
+}
+
+.block {
+  font-size:.8em;
+  display:block;
+  width:60px;
+  height:60px;
+  margin:6px;
+  
+}
