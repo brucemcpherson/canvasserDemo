@@ -3,4 +3,6 @@ This repo (canvasserDemo) was automatically created on 30 April 2015 12:42:45 BS
 for more information see the [desktop liberation site](http://ramblings.mcpher.com/Home/excelquirks/drivesdk/gettinggithubready "desktop liberation")
 you can see [library and dependency information here](dependencies.md)
 
-Now update manually with details of this project - this skeleton file is committed only when there is no README.md in the repo.
+To find out about this demo see [desktop liberation site](http://ramblings.mcpher.com/Home/excelquirks/javascript/canvasser "desktop liberation")
+
+The Apps script version is here
