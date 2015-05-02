@@ -296,7 +296,27 @@ var Canvasser = function (canvas) {
     },
     writable: true
   });
+   /**
+  * called when a shape enter event is detected
+  * @type {function}
+  */
+  Object.defineProperty (self , "onShapeEnter", { 
+    value:function (canvasserShape) { 
+     
+    },
+    writable:true
+  }); 
   
+   /**
+  * called when a shape exit event is detected
+  * @type {function}
+  */
+  Object.defineProperty (self , "onShapeExit", { 
+    value:function (canvasserShape) { 
+     
+    },
+    writable:true
+  }); 
   /**
    * what to do if a mouse up is detected inside canvas
    * @type {function}
