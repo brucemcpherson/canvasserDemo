@@ -1,5 +1,5 @@
 # Google Apps Script Project: canvasserDemo
-This repo (canvasserDemo) was automatically updated on 25 November 2016 11:19:58 GMT by GasGit
+This repo (canvasserDemo) was automatically updated on 31 October 2018 11:41:14 GMT by GasGit
 
 For more information see the [desktop liberation site](http://ramblings.mcpher.com/Home/excelquirks/drivesdk/gettinggithubready "desktop liberation") or [contact me on G+](https://plus.google.com/+BruceMcpherson "Bruce McPherson - GDE")
 ## Details for Apps Script project canvasserDemo
@@ -17,11 +17,14 @@ CanvasserShape| server_js
 CanvasserMouse| server_js
 share| server_js
 styles.css| html
+appsscript| json
 ### Directly referenced libraries
 no libraries discovered
 ### All dependencies and sub dependencies
 no libraries discovered
 ### Enabled Google Services
 no libraries discovered
-###Need more detail ?
+### Scopes required
+no scopes discovered
+### Need more detail ?
 You can see [full project info as json here](info.json)
